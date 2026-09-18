@@ -1,0 +1,21 @@
+[package]
+name = "git-jev"
+version = "0.0.1"
+edition = "2021"
+authors = ["Akash Priyadarshi <272530059+AkashPriyadarshii@users.noreply.github.com>"]
+description = "Sub-second Git pre-commit & pre-push semantic reflex gate powered by TypeSafe AI's Jev"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/AkashPriyadarshii/jev-git"
+keywords = ["git", "git-hook", "typesafe-ai", "jev", "security"]
+categories = ["command-line-utilities", "development-tools"]
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+ureq = { version = "2.10", features = ["json"] }
+is-terminal = "0.4"
+
+[[bin]]
+name = "git-jev"
+path = "src/main.rs"
