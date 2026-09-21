@@ -66,6 +66,13 @@ git diff HEAD~1 | git jev check
 Akash Priyadarshi (Patna, Bihar, India)  
 [GitHub](https://github.com/AkashPriyadarshii) · [Portfolio](https://akashpriyadarshi.vercel.app) · [LinkedIn](https://linkedin.com/in/akash-priyadarshi-1aa51b37a) · [Resume](https://akashpriyadarshii.github.io/Resume/)
 
+
+
+<p align="center">
+  <img src="https://api.star-history.com/svg?repos=AkashPriyadarshii/jev-git&type=Date" width="600" alt="star history" />
+</p>
+
+
 ## License
 
 MIT © Akash Priyadarshi
