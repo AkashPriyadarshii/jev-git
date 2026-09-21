@@ -18,6 +18,7 @@ struct Question {
     #[serde(rename = "type")]
     qtype: String,
     instructions: String,
+    criteria: HashMap<String, String>,
 }
 
 #[derive(Deserialize)]
@@ -88,17 +89,56 @@ fn handle_install() {
 
     let hook_path = hooks_dir.join("pre-commit");
     let hook_script = r#"#!/bin/sh
-# Installed by git-jev
+# Installed by git-jev (chained: existing hook content preserved below)
 git-jev check
 "#;
 
-    if let Err(e) = fs::write(&hook_path, hook_script) {
-        eprintln!("Error writing pre-commit hook: {}", e);
-        exit(1);
+    if hook_path.exists() {
+        let existing = fs::read_to_string(&hook_path).unwrap_or_default();
+        if existing.contains("git-jev check") {
+            println!("✔ git-jev already wired in .git/hooks/pre-commit");
+        } else {
+            let chained = format!("{}\n{}", hook_script, existing);
+            if let Err(e) = fs::write(&hook_path, chained) {
+                eprintln!("Error chaining pre-commit hook: {}", e);
+                exit(1);
+            }
+            set_executable(&hook_path);
+            println!("✔ Chained git-jev into existing .git/hooks/pre-commit");
+        }
+    } else {
+        if let Err(e) = fs::write(&hook_path, hook_script) {
+            eprintln!("Error writing pre-commit hook: {}", e);
+            exit(1);
+        }
+        set_executable(&hook_path);
+        println!("✔ Installed git-jev pre-commit hook to .git/hooks/pre-commit");
     }
 
-    println!("✔ Installed git-jev pre-commit hook to .git/hooks/pre-commit");
+    let push_path = hooks_dir.join("pre-push");
+    let push_script = "#!/bin/sh\n# Installed by git-jev\ngit-jev check\n";
+    if !push_path.exists() {
+        if let Err(e) = fs::write(&push_path, push_script) {
+            eprintln!("Error writing pre-push hook: {}", e);
+            exit(1);
+        }
+        set_executable(&push_path);
+        println!("✔ Installed git-jev pre-push hook to .git/hooks/pre-push");
+    }
 }
+
+#[cfg(unix)]
+fn set_executable(path: &Path) {
+    use std::os::unix::fs::PermissionsExt;
+    if let Ok(meta) = fs::metadata(path) {
+        let mut perm = meta.permissions();
+        perm.set_mode(0o755);
+        let _ = fs::set_permissions(path, perm);
+    }
+}
+
+#[cfg(not(unix))]
+fn set_executable(_path: &Path) {}
 
 fn handle_check() {
     let diff = get_diff();
@@ -110,17 +150,21 @@ fn handle_check() {
     let api_key = match env::var("TYPESAFE_API_KEY") {
         Ok(k) if !k.trim().is_empty() => k,
         _ => {
-            eprintln!("Warning: TYPESAFE_API_KEY environment variable not set. Skipping Jev semantic check.");
-            return;
+            eprintln!("BLOCKED: TYPESAFE_API_KEY not set. No check ran, commit refused.");
+            exit(2);
         }
     };
 
     let mut questions = HashMap::new();
+    let mut bool_criteria = HashMap::new();
+    bool_criteria.insert("true".to_string(), "The diff clearly contains the flagged content.".to_string());
+    bool_criteria.insert("false".to_string(), "The diff does not contain the flagged content.".to_string());
     questions.insert(
         "has_secrets".to_string(),
         Question {
             qtype: "noul".to_string(),
             instructions: "Does this git diff contain any hardcoded API keys, secrets, private keys, passwords, or authentication tokens?".to_string(),
+            criteria: bool_criteria.clone(),
         },
     );
     questions.insert(
@@ -128,18 +172,21 @@ fn handle_check() {
         Question {
             qtype: "noul".to_string(),
             instructions: "Does this git diff contain destructive shell commands (like rm -rf /, format drive), prompt injection payloads, or harmful backdoors?".to_string(),
+            criteria: bool_criteria,
         },
     );
 
-    // Truncate diff to 25,000 characters to stay within Jev limits if diff is massive
+    // Truncate diff at a char boundary; warn because secrets hide in tails.
     let state_text = if diff.len() > 25000 {
-        &diff[..25000]
+        eprintln!("Warning: diff truncated to 25,000 chars for scoring; review the tail by hand.");
+        let cut = diff.floor_char_boundary(25000);
+        &diff[..cut]
     } else {
         &diff
     };
 
     let payload = SystemOneRequest {
-        model: "jev-latest".to_string(),
+        model: "jev-1.13.0".to_string(),
         state: serde_json::json!({ "diff": state_text }),
         questions,
     };
@@ -147,49 +194,94 @@ fn handle_check() {
     let resp = ureq::post("https://api.typesafe.ai/v1/systemone")
         .set("Authorization", &format!("Bearer {}", api_key))
         .set("Content-Type", "application/json")
+        .timeout(std::time::Duration::from_secs(8))
         .send_json(&payload);
 
     let parsed: SystemOneResponse = match resp {
         Ok(r) => match r.into_json() {
             Ok(j) => j,
             Err(e) => {
-                eprintln!("Error decoding response from TypeSafe API: {}", e);
-                return;
+                eprintln!("BLOCKED: could not decode TypeSafe response ({}). Commit refused.", e);
+                exit(2);
             }
         },
         Err(e) => {
-            eprintln!("TypeSafe API error: {}", e);
-            return;
+            eprintln!("BLOCKED: TypeSafe API error ({}). Commit refused.", e);
+            exit(2);
         }
     };
 
     let mut blocked = false;
 
-    if let Some(ans) = parsed.answers.get("has_secrets") {
-        let prob = ans.noul.unwrap_or(0.0);
-        if prob >= 0.70 {
-            eprintln!("✖ [BLOCKED] Hardcoded secret or credential detected! (probability: {:.2})", prob);
-            blocked = true;
-        } else {
-            println!("✔ No secrets detected (p={:.2})", prob);
-        }
-    }
-
-    if let Some(ans) = parsed.answers.get("has_destructive_payload") {
-        let prob = ans.noul.unwrap_or(0.0);
-        if prob >= 0.70 {
-            eprintln!("✖ [BLOCKED] Destructive command or prompt injection detected! (probability: {:.2})", prob);
-            blocked = true;
-        } else {
-            println!("✔ No destructive payloads detected (p={:.2})", prob);
-        }
-    }
+    blocked |= gate("secret or credential", parsed.answers.get("has_secrets"));
+    blocked |= gate("destructive payload", parsed.answers.get("has_destructive_payload"));
 
     if blocked {
         eprintln!("\nCommit aborted by git-jev. Remove sensitive or hazardous content before committing.");
         exit(1);
     } else {
         println!("[PASS] Commit diff verified by git-jev.");
+    }
+}
+
+/// One threshold band per answer. Missing answer = fail closed.
+fn gate(label: &str, ans: Option<&Answer>) -> bool {
+    match verdict(ans.and_then(|a| a.noul)) {
+        Verdict::Block => {
+            eprintln!("✖ [BLOCKED] {} detected! Refusing commit.", label);
+            true
+        }
+        Verdict::Missing => {
+            eprintln!("BLOCKED: Jev answer for '{}' missing or unparsable. Commit refused.", label);
+            exit(2);
+        }
+        Verdict::Warn(p) => {
+            eprintln!("⚠ [WARN] Possible {} (p={:.2}). Proceed only after manual review.", label, p);
+            false
+        }
+        Verdict::Pass(p) => {
+            println!("✔ No {} detected (p={:.2})", label, p);
+            false
+        }
+    }
+}
+
+#[derive(Debug, PartialEq)]
+enum Verdict {
+    Block,
+    Warn(f64),
+    Pass(f64),
+    Missing,
+}
+
+fn verdict(prob: Option<f64>) -> Verdict {
+    match prob {
+        None => Verdict::Missing,
+        Some(p) if p >= 0.80 => Verdict::Block,
+        Some(p) if p >= 0.55 => Verdict::Warn(p),
+        Some(p) => Verdict::Pass(p),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn bands() {
+        assert_eq!(verdict(None), Verdict::Missing);
+        assert_eq!(verdict(Some(0.9)), Verdict::Block);
+        assert_eq!(verdict(Some(0.8)), Verdict::Block);
+        assert_eq!(verdict(Some(0.6)), Verdict::Warn(0.6));
+        assert_eq!(verdict(Some(0.1)), Verdict::Pass(0.1));
+    }
+
+    #[test]
+    fn truncates_at_char_boundary() {
+        let s = "a".repeat(24999) + "é";
+        let cut = s.floor_char_boundary(25000);
+        assert!(s[..cut].chars().count() <= 25000);
+        assert!(std::str::from_utf8(&s.as_bytes()[..cut]).is_ok());
     }
 }
 
