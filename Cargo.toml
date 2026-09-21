@@ -1,6 +1,6 @@
 [package]
 name = "git-jev"
-version = "0.0.1"
+version = "0.1.0"
 edition = "2021"
 authors = ["Akash Priyadarshi <272530059+AkashPriyadarshii@users.noreply.github.com>"]
 description = "Sub-second Git pre-commit & pre-push semantic reflex gate powered by TypeSafe AI's Jev"

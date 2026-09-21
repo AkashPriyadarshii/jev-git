@@ -6,7 +6,7 @@
   <h1 align="center">jev-git</h1>
   <p align="center"><strong>Sub-second Git pre-commit & pre-push semantic reflex gate powered by TypeSafe AI's Jev.</strong></p>
   <p align="center">
-    <a href="https://github.com/AkashPriyadarshii/jev-git/releases"><img src="https://img.shields.io/badge/version-0.0.1-black?style=flat-square" alt="Version"></a>
+    <a href="https://github.com/AkashPriyadarshii/jev-git/releases"><img src="https://img.shields.io/badge/version-0.1.0-black?style=flat-square" alt="Version"></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-black?style=flat-square" alt="License"></a>
     <a href="https://typesafe.ai"><img src="https://img.shields.io/badge/engine-TypeSafe%20Jev-black?style=flat-square" alt="TypeSafe Jev"></a>
   </p>
