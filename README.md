@@ -29,6 +29,8 @@ Regex-based git hooks miss subtle semantic context. Full LLMs take 4–6 seconds
 
 ```bash
 # 1. Install pre-commit hook in any repo
+
+[![stars](https://img.shields.io/github/stars/AkashPriyadarshii/jev-git?style=flat-square&label=stars)](https://github.com/AkashPriyadarshii/jev-git/stargazers) [![release](https://img.shields.io/github/v/release/AkashPriyadarshii/jev-git?style=flat-square&label=release)](https://github.com/AkashPriyadarshii/jev-git/releases)
 git jev install
 
 # 2. Check staged diff on demand
