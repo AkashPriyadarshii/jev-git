@@ -1,3 +1,5 @@
+*Fuel the next build:* [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/AkashPriyadarshi)
+
 <!-- Title: jev-git — Sub-second Git pre-commit & pre-push semantic guard using TypeSafe AI Jev -->
 <!-- Description: Statically linked Rust Git extension and hook runner that screens staged diffs for secrets, destructive payloads, and AI hallucinations in under 100ms with zero RAM bloat. -->
 <!-- Keywords: git-hook, jev, typesafe-ai, rust, git-extension, security, pre-commit, ai-safety, cli -->
@@ -64,7 +66,7 @@ git diff HEAD~1 | git jev check
 ## Author
 
 Akash Priyadarshi (Patna, Bihar, India)  
-[GitHub](https://github.com/AkashPriyadarshii) · [Portfolio](https://akashpriyadarshi.vercel.app) · [LinkedIn](https://linkedin.com/in/akash-priyadarshi-1aa51b37a) · [Resume](https://akashpriyadarshii.github.io/Resume/)
+[GitHub](https://github.com/AkashPriyadarshii) · [Portfolio](https://akashpriyadarshi.vercel.app) · [LinkedIn](https://linkedin.com/in/akashpriyadarshii) · [Resume](https://akashpriyadarshii.github.io/Resume/)
 
 
 
