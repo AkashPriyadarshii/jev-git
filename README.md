@@ -1,4 +1,6 @@
-*Fuel the next build:* [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/AkashPriyadarshi)
+*Fuel the next build:* 
+
+**Support:** fuel the next build — [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/AkashPriyadarshi)
 
 <!-- Title: jev-git — Sub-second Git pre-commit & pre-push semantic guard using TypeSafe AI Jev -->
 <!-- Description: Statically linked Rust Git extension and hook runner that screens staged diffs for secrets, destructive payloads, and AI hallucinations in under 100ms with zero RAM bloat. -->
@@ -68,12 +70,9 @@ git diff HEAD~1 | git jev check
 Akash Priyadarshi (Patna, Bihar, India)  
 [GitHub](https://github.com/AkashPriyadarshii) · [Portfolio](https://akashpriyadarshi.vercel.app) · [LinkedIn](https://linkedin.com/in/akashpriyadarshii) · [Resume](https://akashpriyadarshii.github.io/Resume/)
 
-
-
 <p align="center">
   <img src="https://api.star-history.com/svg?repos=AkashPriyadarshii/jev-git&type=Date" width="600" alt="star history" />
 </p>
-
 
 ## License
 
